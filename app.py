@@ -3,7 +3,6 @@ import streamlit as st
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Vt, Dm):
     egc = Azv - Azgc                   # εgc
     Rv = Rgc - egc                    # Rumbo verdadero estimado
-    egc_cp = Rv - Rcp                # εgc (compás patrón)
     delta_cp = (Vt - Dm)        # δcp
     return egc, Rv, egc_cp, delta_cp
 
@@ -23,5 +22,4 @@ if st.button("Calcular"):
     st.success("Resultados del Cálculo:")
     st.write(f"εgc = {egc:.2f}°")
     st.write(f"Rv = {Rv:.2f}°")
-    st.write(f"εgc (compás patrón) = {egc_cp:.2f}°")
     st.write(f"δcp = {delta_cp:.2f}°")
