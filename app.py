@@ -10,11 +10,11 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
 st.title("Calculadora de Desvíos del Girocompás y Compás Patrón")
 st.markdown("Ingrese los datos en grados decimales:")
 
-Azv = st.number_input("Azv (Azimut Verdadero)", value=125.25)
-Azgc = st.number_input("Azgc (Azimut del Girocompás)", value=123.75)
-Rgc = st.number_input("Rgc (Rumbo del Girocompás)", value=98.4)
-Rcp = st.number_input("Rcp (Rumbo del Compás Patrón)", value=96.0)
-Dm = st.number_input("Dm (Declinación Magnética)", value=4.0)
+Azv = st.number_input("Azv (Azimut Verdadero)", value=0.0)
+Azgc = st.number_input("Azgc (Azimut del Girocompás)", value=0.0)
+Rgc = st.number_input("Rgc (Rumbo del Girocompás)", value=0.0)
+Rcp = st.number_input("Rcp (Rumbo del Compás Patrón)", value=0.0)
+Dm = st.number_input("Dm (Declinación Magnética)", value=0.0)
 
 if st.button("Calcular"):
     egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
