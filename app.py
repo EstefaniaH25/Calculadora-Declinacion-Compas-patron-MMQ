@@ -69,56 +69,28 @@ st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuti
 st.markdown("---")
 st.markdown("### Ingrese los datos en formato grados°,décimas:")
 
-# Función para convertir el formato grados°,décimas a valor decimal
-def format_to_decimal(grados, decimas):
-    return grados + (decimas/10)
+# Función para convertir el formato xxx,x a xxx°,x y a valor decimal
+def format_to_decimal(input_str):
+    try:
+        grados, decimas = map(float, input_str.split(","))
+        return grados + (decimas / 10), f"{int(grados)}°,{int(decimas)}"
+    except ValueError:
+        st.error("Formato incorrecto. Use grados,décimas (ej: 123,4)")
+        return None, None
 
-# 📥 Entradas del usuario en formato grados°,décimas
-col1, col2, col3 = st.columns([2, 0.3, 1])
+# 📥 Entradas del usuario en un solo campo de texto
+Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "0,0")
+Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "0,0")
+Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "0,0")
+Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "0,0")
+Dm_str = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "0,0")
 
-with col1:
-    Azv_grados = st.number_input("🔹 Azv (Azimut Verdadero) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Azv_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Azv_dec_1")
-Azv = format_to_decimal(Azv_grados, Azv_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Azgc_grados = st.number_input("🔹 Azgc (Azimut del Girocompás) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Azgc_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Azgc_dec_2")
-Azgc = format_to_decimal(Azgc_grados, Azgc_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Rgc_grados = st.number_input("🔹 Rgc (Rumbo del Girocompás) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Rgc_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Rgc_dec_3")
-Rgc = format_to_decimal(Rgc_grados, Rgc_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Rcp_grados = st.number_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Rcp_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Rcp_dec_4")
-Rcp = format_to_decimal(Rcp_grados, Rcp_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Dm_grados = st.number_input("🔹 Dm (Declinación Magnética) - Grados", min_value=-180, max_value=180, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Dm_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Dm_dec_5")
-Dm = format_to_decimal(Dm_grados, Dm_decimas)
+# Convertir las entradas a formato decimal y formatearlas
+Azv, Azv_formatted = format_to_decimal(Azv_str)
+Azgc, Azgc_formatted = format_to_decimal(Azgc_str)
+Rgc, Rgc_formatted = format_to_decimal(Rgc_str)
+Rcp, Rcp_formatted = format_to_decimal(Rcp_str)
+Dm, Dm_formatted = format_to_decimal(Dm_str)
 
 # 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
@@ -127,22 +99,16 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     Vt = Rv - Rcp              # Variación total
     delta_cp = Vt - Dm         # Desvío del compás patrón (δcp)
     
-    # Normalizar valores de rumbo entre 0 y 360
-    Rv = Rv % 360
-    
     return egc, Rv, Vt, delta_cp
 
 # Función para formatear número a grados°,décimas
 def decimal_to_format(valor):
     grados = int(valor)
     decimas = round((valor - grados) * 10)
-    if decimas == 10:  # En caso de redondeo a 10
-        decimas = 0
-        grados += 1
     return f"{grados}°,{decimas}"
 
 # Función para crear PDF con ReportLab
-def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp, alerta_delta_cp):
+def crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_formatted, egc, Rv, Vt, delta_cp, alerta_delta_cp):
     buffer = io.BytesIO()
     
     # Configurar el documento
@@ -199,11 +165,11 @@ def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp, alerta_delta_cp):
     datos_titulo = Paragraph("Datos Ingresados:", subtitulo_style)
     story.append(datos_titulo)
     
-    story.append(Paragraph(f"Azv (Azimut Verdadero): {decimal_to_format(Azv)}", normal_style))
-    story.append(Paragraph(f"Azgc (Azimut del Girocompás): {decimal_to_format(Azgc)}", normal_style))
-    story.append(Paragraph(f"Rgc (Rumbo del Girocompás): {decimal_to_format(Rgc)}", normal_style))
-    story.append(Paragraph(f"Rcp (Rumbo del Compás Patrón): {decimal_to_format(Rcp)}", normal_style))
-    story.append(Paragraph(f"Dm (Declinación Magnética): {decimal_to_format(Dm)}", normal_style))
+    story.append(Paragraph(f"Azv (Azimut Verdadero): {Azv_formatted}", normal_style))
+    story.append(Paragraph(f"Azgc (Azimut del Girocompás): {Azgc_formatted}", normal_style))
+    story.append(Paragraph(f"Rgc (Rumbo del Girocompás): {Rgc_formatted}", normal_style))
+    story.append(Paragraph(f"Rcp (Rumbo del Compás Patrón): {Rcp_formatted}", normal_style))
+    story.append(Paragraph(f"Dm (Declinación Magnética): {Dm_formatted}", normal_style))
     
     story.append(Spacer(1, 0.5*inch))
     
@@ -245,42 +211,44 @@ def get_binary_file_downloader_html(bin_data, file_label='File', filename='file.
 
 # 🔘 Botón de cálculo
 if st.button("⚓ Calcular"):
-    egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
-    
-    # Verificar si el desvío del compás patrón está fuera de rango
-    alerta_delta_cp = abs(delta_cp) > 1.5
-    
-    st.markdown("### 📊 Resultados del Cálculo")
-    st.success(f"εgc (Azv - Azgc) = **{decimal_to_format(egc)}**")
-    st.success(f"Rv (Rgc + εgc) = **{decimal_to_format(Rv)}**")
-    st.success(f"Vt (Rv - Rcp) = **{decimal_to_format(Vt)}**")
-    
-    # Mostrar el resultado del desvío del compás patrón con alerta si es necesario
-    if alerta_delta_cp:
-        st.markdown(f"""
-        <div class="warning">
-            δcp (Vt - Dm) = <strong>{decimal_to_format(delta_cp)}</strong> ⚠️<br>
-            ¡ATENCIÓN! El desvío del compás patrón excede el límite recomendado de ±1°,5
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.success(f"δcp (Vt - Dm) = **{decimal_to_format(delta_cp)}**")
-    
-    st.markdown("---")
-    
-    try:
-        # Generar PDF y crear enlace de descarga
-        pdf_bytes = crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp, alerta_delta_cp)
-        fecha_archivo = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"Resultados_Desvios_Nauticos_{fecha_archivo}.pdf"
+    # Verificar que todos los valores han sido ingresados correctamente
+    if Azv is not None and Azgc is not None and Rgc is not None and Rcp is not None and Dm is not None:
+        egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
         
-        st.markdown("<div class='download-button'>", unsafe_allow_html=True)
-        download_link = get_binary_file_downloader_html(pdf_bytes, '📥 Descargar Resultados como PDF', filename)
-        st.markdown(download_link, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Hubo un problema al generar el PDF. Por favor intente nuevamente.")
-        st.error(f"Error: {str(e)}")
+        # Verificar si el desvío del compás patrón está fuera de rango
+        alerta_delta_cp = abs(delta_cp) > 1.5
+        
+        st.markdown("### 📊 Resultados del Cálculo")
+        st.success(f"εgc (Azv - Azgc) = **{decimal_to_format(egc)}**")
+        st.success(f"Rv (Rgc + εgc) = **{decimal_to_format(Rv)}**")
+        st.success(f"Vt (Rv - Rcp) = **{decimal_to_format(Vt)}**")
+        
+        # Mostrar el resultado del desvío del compás patrón con alerta si es necesario
+        if alerta_delta_cp:
+            st.markdown(f"""
+            <div class="warning">
+                δcp (Vt - Dm) = <strong>{decimal_to_format(delta_cp)}</strong> ⚠️<br>
+                ¡ATENCIÓN! El desvío del compás patrón excede el límite recomendado de ±1°,5
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.success(f"δcp (Vt - Dm) = **{decimal_to_format(delta_cp)}**")
+        
+        st.markdown("---")
+        
+        try:
+            # Generar PDF y crear enlace de descarga
+            pdf_bytes = crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_formatted, egc, Rv, Vt, delta_cp, alerta_delta_cp)
+            fecha_archivo = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"Resultados_Desvios_Nauticos_{fecha_archivo}.pdf"
+            
+            st.markdown("<div class='download-button'>", unsafe_allow_html=True)
+            download_link = get_binary_file_downloader_html(pdf_bytes, '📥 Descargar Resultados como PDF', filename)
+            st.markdown(download_link, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Hubo un problema al generar el PDF. Por favor intente nuevamente.")
+            st.error(f"Error: {str(e)}")
 
 # 🖋️ Firma
 st.markdown("""
