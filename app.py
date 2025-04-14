@@ -70,55 +70,13 @@ st.markdown("---")
 st.markdown("### Ingrese los datos en formato grados°,décimas:")
 
 # Función para convertir el formato grados°,décimas a valor decimal
-def format_to_decimal(grados, decimas):
-    return grados + (decimas/10)
-
-# 📥 Entradas del usuario en formato grados°,décimas
-col1, col2, col3 = st.columns([2, 0.3, 1])
-
-with col1:
-    Azv_grados = st.number_input("🔹 Azv (Azimut Verdadero) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Azv_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Azv_dec")
-Azv = format_to_decimal(Azv_grados, Azv_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Azgc_grados = st.number_input("🔹 Azgc (Azimut del Girocompás) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Azgc_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Azgc_dec")
-Azgc = format_to_decimal(Azgc_grados, Azgc_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Rgc_grados = st.number_input("🔹 Rgc (Rumbo del Girocompás) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Rgc_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Rgc_dec")
-Rgc = format_to_decimal(Rgc_grados, Rgc_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Rcp_grados = st.number_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados", min_value=0, max_value=359, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Rcp_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Rcp_dec")
-Rcp = format_to_decimal(Rcp_grados, Rcp_decimas)
-
-col1, col2, col3 = st.columns([2, 0.3, 1])
-with col1:
-    Dm_grados = st.number_input("🔹 Dm (Declinación Magnética) - Grados", min_value=-180, max_value=180, value=0, step=1)
-with col2:
-    st.markdown("<div style='margin-top: 30px;'><strong>°,</strong></div>", unsafe_allow_html=True)
-with col3:
-    Dm_decimas = st.number_input("Décimas", min_value=0, max_value=9, value=0, step=1, key="Dm_dec")
-Dm = format_to_decimal(Dm_grados, Dm_decimas)
+def format_to_decimal(input_str):
+    try:
+        grados, decimas = map(float, input_str.replace("°", ",").split(","))
+        return grados + (decimas/10)
+    except ValueError:
+        st.error("Formato incorrecto. Use grados°,décimas (ej: 123°,4)")
+        return None
 
 # 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
@@ -127,10 +85,39 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     Vt = Rv - Rcp              # Variación total
     delta_cp = Vt - Dm         # Desvío del compás patrón (δcp)
     
-    # Normalizar valores de rumbo entre 0 y 360
-    Rv = Rv % 360
-    
     return egc, Rv, Vt, delta_cp
+
+# Función para formatear número a grados°,décimas
+def decimal_to_format(valor):
+    grados = int(valor)
+    decimas = round((valor - grados) * 10)
+    return f"{grados}°,{decimas}"
+
+# 📥 Entradas del usuario en un solo campo de texto
+Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados°,décimas (ej: 123°,4)", "0°,0")
+Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados°,décimas", "0°,0")
+Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados°,décimas", "0°,0")
+Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados°,décimas", "0°,0")
+Dm_str = st.text_input("🔹 Dm (Declinación Magnética) - Grados°,décimas", "0°,0")
+
+# Convertir las entradas a formato decimal
+Azv = format_to_decimal(Azv_str)
+Azgc = format_to_decimal(Azgc_str)
+Rgc = format_to_decimal(Rgc_str)
+Rcp = format_to_decimal(Rcp_str)
+Dm = format_to_decimal(Dm_str)
+
+# 🔘 Botón de cálculo
+if st.button("⚓ Calcular"):
+    # Verificar que todos los valores han sido ingresados correctamente
+    if Azv is not None and Azgc is not None and Rgc is not None and Rcp is not None and Dm is not None:
+        egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
+        
+        st.markdown("### 📊 Resultados del Cálculo")
+        st.success(f"εgc (Azv - Azgc) = **{decimal_to_format(egc)}**")
+        st.success(f"Rv (Rgc + εgc) = **{decimal_to_format(Rv)}**")
+        st.success(f"Vt (Rv - Rcp) = **{decimal_to_format(Vt)}**")
+        st.success(f"δcp (Vt - Dm) = **{decimal_to_format(delta_cp)}**")
 
 # Función para formatear número a grados°,décimas
 def decimal_to_format(valor):
