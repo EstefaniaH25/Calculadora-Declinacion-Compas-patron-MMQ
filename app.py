@@ -101,10 +101,10 @@ def diferencia_angular(a, b):
     
 # 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
-    egc = diferencia_angular(Azv, Azgc)   # εgc = Azv - Azgc
-    Rv = (Rgc + egc) % 360               # Rv = Rgc + εgc, normalizado
-    Vt = diferencia_angular(Rv, Rcp)     # Vt = Rv - Rcp
-    delta_cp = diferencia_angular(Vt, Dm)  # δcp = Vt - Dm
+    egc = diferencia_angular(Azv, Azgc)       # εgc = Azv - Azgc
+    Rv = (Rgc + egc) % 360                     # Rv = Rgc + εgc
+    Vt = diferencia_angular(Rv, Rcp)           # Vt = Rv - Rcp
+    delta_cp = Vt - Dm                         # 🔧 corregido: δcp = Vt - Dm (sin normalizar)
     return egc, Rv, Vt, delta_cp
 
 # Función para formatear número a grados°,décimas
