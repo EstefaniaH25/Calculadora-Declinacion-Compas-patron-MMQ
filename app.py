@@ -93,6 +93,11 @@ Rgc, Rgc_formatted = format_to_decimal(Rgc_str)
 Rcp, Rcp_formatted = format_to_decimal(Rcp_str)
 Dm, Dm_formatted = format_to_decimal(Dm_str)
 
+# 🔁 Función de diferencia angular
+def diferencia_angular(a, b):
+    """Devuelve la diferencia angular mínima entre dos ángulos (en grados)."""
+    return (a - b + 180) % 360 - 180
+    
 # 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     egc = diferencia_angular(Azv, Azgc)   # εgc = Azv - Azgc
