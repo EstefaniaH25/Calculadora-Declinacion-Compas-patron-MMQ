@@ -107,7 +107,7 @@ def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp):
     
     # Fecha y hora
     fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    fecha = Paragraph(f"Generado el: {fecha_actual}"UTC, styles['Italic'])
+    fecha = Paragraph(f"Generado el: {fecha_actual}", styles['Italic'])
     story.append(fecha)
     story.append(Spacer(1, 0.5*inch))
     
