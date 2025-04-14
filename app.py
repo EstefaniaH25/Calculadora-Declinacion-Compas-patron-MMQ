@@ -1,5 +1,49 @@
 import streamlit as st
 
+# 🎨 Estilos personalizados y firma flotante
+st.markdown("""
+    <style>
+        /* Fondo principal */
+        .main {
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        /* Inputs */
+        input {
+            background-color: #222 !important;
+            color: white !important;
+        }
+
+        /* Botón personalizado */
+        .stButton > button {
+            background-color: #00ccff;
+            color: white;
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-weight: bold;
+        }
+
+        /* Ocultar footer de Streamlit */
+        footer {
+            visibility: hidden;
+        }
+
+        /* Tu firma flotante */
+        .custom-footer {
+            position: fixed;
+            bottom: 10px;
+            right: 20px;
+            color: #888;
+            font-size: 13px;
+        }
+    </style>
+
+    <div class="custom-footer">
+        Desarrollado con 💙 por Matías Quiroga
+    </div>
+""", unsafe_allow_html=True)
+
 # Configuración general de la página
 st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
 
@@ -34,7 +78,7 @@ if st.button("⚓ Calcular"):
 
     st.markdown("---")
 
-# Firma
+# Firma estática al final (opcional si ya usás la flotante)
 st.markdown("""
 <div style='text-align: center; color: gray; font-size: 14px; margin-top: 40px;'>
     Desarrollado por <strong>QUIROGA MATIAS</strong> 🌊<br>
