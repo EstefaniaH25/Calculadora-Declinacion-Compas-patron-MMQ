@@ -1,94 +1,122 @@
 import streamlit as st
-from reportlab.lib.pagesizes import letter
+import base64
+import math
+from datetime import datetime
+import io
 from reportlab.pdfgen import canvas
-from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
-# Configuración de la app
-st.set_page_config(page_title="Calculadora de Desvíos Náuticos (σ)", layout="centered")
+# ✅ Configuración de la página
+st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
 
-# Modo visual
-modo = st.selectbox("🎨 Elegí el modo de visualización", ["Claro", "Oscuro"])
-
-if modo == "Oscuro":
-    st.markdown("""
-        <style>
-        body {
-            background-color: #1c1c1c;
-            color: white;
+# 🎨 Estilos personalizados y firma flotante
+st.markdown("""
+    <style>
+        html, body, [class*="css"] {
+            font-family: 'Segoe UI', sans-serif;
         }
-        .stTextInput > div > div > input {
-            background-color: #333;
-            color: white;
+        h1 {
+            color: navy;
         }
-        .stButton > button {
-            background-color: #444;
-            color: white;
+        .custom-footer {
+            text-align: center;
+            color: gray;
+            font-size: 14px;
+            margin-top: 50px;
         }
-        </style>
-    """, unsafe_allow_html=True)
+        .stButton>button {
+            background-color: #004080;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5em 1.5em;
+            font-weight: bold;
+        }
+        .stButton>button:hover {
+            background-color: #0066cc;
+        }
+        .download-button {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .warning {
+            background-color: #ffffcc;
+            padding: 10px;
+            border-left: 5px solid #ffcc00;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# Título principal
-st.markdown("<h2 style='text-align: center;'>⚓ Calculadora de Desvíos Náuticos (σ)</h2>", unsafe_allow_html=True)
+# 🧭 Título principal
+st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos (σ)</h1>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("### Ingrese los datos en formato grados°,décimas:")
 
-# Conversor string "123,4" a decimal
-def str_to_decimal(value):
+# Función para convertir el formato xxx,x a decimal
+
+def parse_input(value):
     try:
-        return float(value.replace(",", "."))
+        grados, decimas = map(float, value.strip().split(","))
+        return grados + decimas / 10
     except:
+        st.error("Formato incorrecto. Use grados,décimas (ej: 123,4)")
         return None
 
-# Entradas de datos
-azv_input = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "")
-azgc_input = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "")
-rgc_input = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "")
-rcp_input = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "")
-dm_input = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "")
+# Entradas
+Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas", "0,0")
+Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "0,0")
+Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "0,0")
+Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "0,0")
+Dm_str = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "0,0")
 
-if st.button("Calcular"):
-    azv = str_to_decimal(azv_input)
-    azgc = str_to_decimal(azgc_input)
-    rgc = str_to_decimal(rgc_input)
-    rcp = str_to_decimal(rcp_input)
-    dm = str_to_decimal(dm_input)
+Azv = parse_input(Azv_str)
+Azgc = parse_input(Azgc_str)
+Rgc = parse_input(Rgc_str)
+Rcp = parse_input(Rcp_str)
+Dm = parse_input(Dm_str)
 
-    if None in (azv, azgc, rgc, rcp, dm):
-        st.error("❌ Todos los campos deben estar completos y en el formato correcto.")
-    else:
-        # Cálculos
-        egc = azv - azgc             # εgc
-        rv = rgc + egc               # Rv
-        vt = rv - rcp                # Vt
-        dcp = vt - dm                # δcp
+# Función para diferencia angular normalizada
 
-        # Resultados
+def diferencia_angular(a, b):
+    return (a - b + 180) % 360 - 180
+
+# Cálculos
+if st.button("⚓ Calcular"):
+    if None not in (Azv, Azgc, Rgc, Rcp, Dm):
+        egc = diferencia_angular(Azv, Azgc)
+        Rv = (Rgc + egc) % 360
+        Vt = diferencia_angular(Rv, Rcp)
+        delta_cp = Vt - Dm  # NO normalizar esto
+
+        def f(value):
+            sign = "-" if value < 0 else ""
+            value = abs(value)
+            g = int(value)
+            d = round((value - g) * 10)
+            if d == 10:
+                g += 1
+                d = 0
+            return f"{sign}{g}°,{d}"
+
         st.markdown("### 📊 Resultados del Cálculo")
-        st.write(f"εgc (Azv - Azgc) = {egc:.1f}")
-        st.write(f"Rv (Rgc + εgc) = {rv:.1f}")
-        st.write(f"Vt (Rv - Rcp) = {vt:.1f}")
-        st.write(f"δcp (Vt - Dm) = {dcp:.1f}")
+        st.success(f"εgc (Azv - Azgc) = **{f(egc)}**")
+        st.success(f"Rv (Rgc + εgc) = **{f(Rv)}**")
+        st.success(f"Vt (Rv - Rcp) = **{f(Vt)}**")
 
-        if abs(dcp) > 1.5:
-            st.warning("⚠️ ¡ATENCIÓN! El desvío del compás patrón excede el límite recomendado de ±1°,5")
-
-        # Generación de PDF
-        def generar_pdf():
-            buffer = BytesIO()
-            c = canvas.Canvas(buffer, pagesize=letter)
-            c.setFont("Helvetica", 12)
-            c.drawString(100, 750, "📄 Resultados del Cálculo de Desvíos Náuticos")
-            c.drawString(100, 720, f"εgc (Azv - Azgc) = {egc:.1f}")
-            c.drawString(100, 700, f"Rv (Rgc + εgc) = {rv:.1f}")
-            c.drawString(100, 680, f"Vt (Rv - Rcp) = {vt:.1f}")
-            c.drawString(100, 660, f"δcp (Vt - Dm) = {dcp:.1f}")
-            if abs(dcp) > 1.5:
-                c.setFillColorRGB(1, 0, 0)
-                c.drawString(100, 630, "⚠️ ¡El desvío del compás patrón excede el límite recomendado!")
-            c.save()
-            buffer.seek(0)
-            return buffer
-
-        pdf = generar_pdf()
-        st.download_button("📥 Descargar PDF", data=pdf, file_name="resultados_navegacion.pdf", mime="application/pdf")
+        if abs(delta_cp) > 1.5:
+            st.markdown(f"""
+            <div class='warning'>
+            δcp (Vt - Dm) = <strong>{f(delta_cp)}</strong> ⚠️<br>
+            ¡ATENCIÓN! El desvío del compás patrón excede el límite recomendado de ±1°,5
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.success(f"δcp (Vt - Dm) = **{f(delta_cp)}**")
 
 # 🖋️ Firma
 st.markdown("""
@@ -97,3 +125,4 @@ st.markdown("""
         © 2025 - Todos los derechos reservados.
     </div>
 """, unsafe_allow_html=True)
+
