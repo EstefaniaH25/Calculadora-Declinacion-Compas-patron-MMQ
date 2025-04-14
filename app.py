@@ -101,12 +101,6 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     
     return egc, Rv, Vt, delta_cp
 
-# Función para formatear número a grados°,décimas
-def decimal_to_format(valor):
-    grados = int(valor)
-    decimas = int(round(abs((valor - grados) * 10)))
-    return f"{grados}°,{decimas}"
-
 # Función para crear PDF con ReportLab
 def crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_formatted, egc, Rv, Vt, delta_cp, alerta_delta_cp):
     buffer = io.BytesIO()
