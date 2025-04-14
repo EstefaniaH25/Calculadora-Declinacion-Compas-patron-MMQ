@@ -1,272 +1,94 @@
 import streamlit as st
-import base64
-import math
-from datetime import datetime
-import io
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from io import BytesIO
 
-# ✅ Configuración de la página (¡esto va primero!)
-st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
+# Configuración de la app
+st.set_page_config(page_title="Calculadora de Desvíos Náuticos (σ)", layout="centered")
 
-# 🎨 Estilos personalizados y firma flotante
-st.markdown("""
-    <style>
-        html, body, [class*="css"] {
-            font-family: 'Segoe UI', sans-serif;
-        }
-        h1 {
-            color: navy;
-        }
-        .custom-footer {
-            text-align: center;
-            color: gray;
-            font-size: 14px;
-            margin-top: 50px;
-        }
-        .stButton>button {
-            background-color: #004080;
+# Modo visual
+modo = st.selectbox("🎨 Elegí el modo de visualización", ["Claro", "Oscuro"])
+
+if modo == "Oscuro":
+    st.markdown("""
+        <style>
+        body {
+            background-color: #1c1c1c;
             color: white;
-            border-radius: 8px;
-            padding: 0.5em 1.5em;
-            font-weight: bold;
         }
-        .stButton>button:hover {
-            background-color: #0066cc;
+        .stTextInput > div > div > input {
+            background-color: #333;
+            color: white;
         }
-        .download-button {
-            text-align: center;
-            margin-top: 20px;
+        .stButton > button {
+            background-color: #444;
+            color: white;
         }
-        .warning {
-            background-color: #ffffcc;
-            padding: 10px;
-            border-left: 5px solid #ffcc00;
-            color: #333;
-            font-weight: bold;
-        }
-        .input-container {
-            display: flex;
-            align-items: center;
-        }
-        .input-degree {
-            margin-right: 5px;
-        }
-        .input-decimal {
-            margin-left: 5px;
-            width: 70px;
-        }
-    </style>
-""", unsafe_allow_html=True)
+        </style>
+    """, unsafe_allow_html=True)
 
-# 🧭 Título principal con símbolo sigma (σ)
-st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos (σ)</h1>", unsafe_allow_html=True)
-st.markdown("---")
-st.markdown("### Ingrese los datos en formato grados°,décimas:")
+# Título principal
+st.markdown("<h2 style='text-align: center;'>⚓ Calculadora de Desvíos Náuticos (σ)</h2>", unsafe_allow_html=True)
 
-# Función para convertir el formato xxx,x a xxx°,x y a valor decimal
-def format_to_decimal(input_str):
+# Conversor string "123,4" a decimal
+def str_to_decimal(value):
     try:
-        grados, decimas = map(float, input_str.split(","))
-        return grados + (decimas / 10), f"{int(grados)}°,{int(decimas)}"
-    except ValueError:
-        st.error("Formato incorrecto. Use grados,décimas (ej: 123,4)")
-        return None, None
+        return float(value.replace(",", "."))
+    except:
+        return None
 
-# 📥 Entradas del usuario en un solo campo de texto
-Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "0,0")
-Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "0,0")
-Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "0,0")
-Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "0,0")
-Dm_str = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "0,0")
+# Entradas de datos
+azv_input = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "")
+azgc_input = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "")
+rgc_input = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "")
+rcp_input = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "")
+dm_input = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "")
 
-# Convertir las entradas a formato decimal y formatearlas
-Azv, Azv_formatted = format_to_decimal(Azv_str)
-Azgc, Azgc_formatted = format_to_decimal(Azgc_str)
-Rgc, Rgc_formatted = format_to_decimal(Rgc_str)
-Rcp, Rcp_formatted = format_to_decimal(Rcp_str)
-Dm, Dm_formatted = format_to_decimal(Dm_str)
+if st.button("Calcular"):
+    azv = str_to_decimal(azv_input)
+    azgc = str_to_decimal(azgc_input)
+    rgc = str_to_decimal(rgc_input)
+    rcp = str_to_decimal(rcp_input)
+    dm = str_to_decimal(dm_input)
 
-# 📐 Función para diferencia angular normalizada (-180° a 180°)
-def diferencia_angular(a, b):
-    """Calcula la diferencia angular entre dos ángulos a y b, normalizado entre -180° y 180°"""
-    diferencia = (a - b + 180) % 360 - 180
-    return diferencia
-    
-# 🧮 Cálculos
-def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
-    egc = diferencia_angular(Azv, Azgc)       # εgc = Azv - Azgc
-    Rv = (Rgc + egc) % 360                     # Rv = Rgc + εgc
-    Vt = diferencia_angular(Rv, Rcp)           # Vt = Rv - Rcp
-    delta_cp = Vt - Dm                         # 🔧 corregido: δcp = Vt - Dm (sin normalizar)
-    return egc, Rv, Vt, delta_cp
-
-# Función para formatear número a grados°,décimas
-def decimal_to_format(valor):
-    signo = '-' if valor < 0 else ''
-    valor_abs = abs(valor)
-    grados = int(valor_abs)
-    decimas = round((valor_abs - grados) * 10)
-
-    # Ajuste por redondeo de décimas > 9 (ej: 12.96 redondea a 13,0)
-    if decimas == 10:
-        grados += 1
-        decimas = 0
-
-    return f"{signo}{grados}°,{decimas}"
-
-# Inicializar las variables con un valor por defecto
-egc, Rv, Vt, delta_cp = 0.0, 0.0, 0.0, 0.0
-alerta_delta_cp = False
-
-# Función para crear PDF con ReportLab
-def crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_formatted, egc, Rv, Vt, delta_cp, alerta_delta_cp):
-    buffer = io.BytesIO()
-    
-    # Configurar el documento
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    story = []
-    
-    # Estilos
-    styles = getSampleStyleSheet()
-    titulo_style = ParagraphStyle(
-        'TituloStyle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=16,
-        alignment=1,  # Centrado
-        spaceAfter=20
-    )
-    
-    subtitulo_style = ParagraphStyle(
-        'SubtituloStyle', 
-        parent=styles['Heading2'],
-        fontName='Helvetica-Bold',
-        fontSize=14,
-        spaceAfter=10
-    )
-    
-    normal_style = ParagraphStyle(
-        'NormalStyle',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=12,
-        spaceAfter=5
-    )
-    
-    warning_style = ParagraphStyle(
-        'WarningStyle',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=12,
-        textColor=colors.orange,
-        spaceAfter=5
-    )
-    
-    # Título con símbolo sigma
-    titulo = Paragraph("Calculadora de Desvíos Náuticos (σ)", titulo_style)
-    story.append(titulo)
-    
-    # Fecha y hora
-    fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    fecha = Paragraph(f"Generado el: {fecha_actual}", styles['Italic'])
-    story.append(fecha)
-    story.append(Spacer(1, 0.5*inch))
-    
-    # Datos ingresados
-    datos_titulo = Paragraph("Datos Ingresados:", subtitulo_style)
-    story.append(datos_titulo)
-    
-    story.append(Paragraph(f"Azv (Azimut Verdadero): {Azv_formatted}", normal_style))
-    story.append(Paragraph(f"Azgc (Azimut del Girocompás): {Azgc_formatted}", normal_style))
-    story.append(Paragraph(f"Rgc (Rumbo del Girocompás): {Rgc_formatted}", normal_style))
-    story.append(Paragraph(f"Rcp (Rumbo del Compás Patrón): {Rcp_formatted}", normal_style))
-    story.append(Paragraph(f"Dm (Declinación Magnética): {Dm_formatted}", normal_style))
-    
-    story.append(Spacer(1, 0.5*inch))
-    
-    # Resultados
-    resultados_titulo = Paragraph("Resultados del Cálculo:", subtitulo_style)
-    story.append(resultados_titulo)
-    
-    story.append(Paragraph(f"εgc (Azv - Azgc) = {format_decimal(egc)}", normal_style))
-    story.append(Paragraph(f"Rv (Rgc + εgc) = {decimal_to_format(Rv)}", normal_style))
-    story.append(Paragraph(f"Vt (Rv - Rcp) = {decimal_to_format(Vt)}", normal_style))
-    
-    # Resaltar desvío del compás patrón si está fuera de rango
-    if alerta_delta_cp:
-        story.append(Paragraph(f"δcp (Vt - Dm) = {decimal_to_format(delta_cp)} ⚠️ FUERA DE RANGO ACEPTABLE", warning_style))
-        story.append(Paragraph("El desvío del compás patrón excede el límite recomendado de ±1°,5", warning_style))
+    if None in (azv, azgc, rgc, rcp, dm):
+        st.error("❌ Todos los campos deben estar completos y en el formato correcto.")
     else:
-        story.append(Paragraph(f"δcp (Vt - Dm) = {decimal_to_format(delta_cp)}", normal_style))
-    
-    story.append(Spacer(1, inch))
-    
-    # Pie de página
-    footer = Paragraph("Desarrollado por QUIROGA MATIAS © 2025", styles['Italic'])
-    story.append(footer)
-    
-    # Construir el documento
-    doc.build(story)
-    
-    # Obtener el valor del buffer y devolverlo
-    pdf_data = buffer.getvalue()
-    buffer.close()
-    
-    return pdf_data
+        # Cálculos
+        egc = azv - azgc             # εgc
+        rv = rgc + egc               # Rv
+        vt = rv - rcp                # Vt
+        dcp = vt - dm                # δcp
 
-# Función para crear enlace de descarga
-def get_binary_file_downloader_html(bin_data, file_label='File', filename='file.pdf'):
-    bin_str = base64.b64encode(bin_data).decode()
-    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{filename}" class="download-button-link" style="background-color: #004080; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold;">{file_label}</a>'
-    return href
-
-# 🔘 Botón de cálculo
-if st.button("⚓ Calcular"):
-    # Verificar que todos los valores han sido ingresados correctamente
-    if Azv is not None and Azgc is not None and Rgc is not None and Rcp is not None and Dm is not None:
-        egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
-        
-        # Verificar si el desvío del compás patrón está fuera de rango
-        alerta_delta_cp = abs(delta_cp) > 1.5
-        
+        # Resultados
         st.markdown("### 📊 Resultados del Cálculo")
-        st.success(f"εgc (Azv - Azgc) = **{decimal_to_format(egc)}**")
-        st.success(f"Rv (Rgc + εgc) = **{decimal_to_format(Rv)}**")
-        st.success(f"Vt (Rv - Rcp) = **{decimal_to_format(Vt)}**")
-        
-        # Mostrar el resultado del desvío del compás patrón con alerta si es necesario
-        if alerta_delta_cp:
-            st.markdown(f"""
-            <div class="warning">
-                δcp (Vt - Dm) = <strong>{decimal_to_format(delta_cp)}</strong> ⚠️<br>
-                ¡ATENCIÓN! El desvío del compás patrón excede el límite recomendado de ±1°,5
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.success(f"δcp (Vt - Dm) = **{format_decimal(delta_cp)}**")
-        
-        st.markdown("---")
-        
-        try:
-            # Generar PDF y crear enlace de descarga
-            pdf_bytes = crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_formatted, egc, Rv, Vt, delta_cp, alerta_delta_cp)
-            fecha_archivo = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"Resultados_Desvios_Nauticos_{fecha_archivo}.pdf"
-            
-            st.markdown("<div class='download-button'>", unsafe_allow_html=True)
-            download_link = get_binary_file_downloader_html(pdf_bytes, '📥 Descargar Resultados como PDF', filename)
-            st.markdown(download_link, unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Hubo un problema al generar el PDF. Por favor intente nuevamente.")
-            st.error(f"Error: {str(e)}")
+        st.write(f"εgc (Azv - Azgc) = {egc:.1f}")
+        st.write(f"Rv (Rgc + εgc) = {rv:.1f}")
+        st.write(f"Vt (Rv - Rcp) = {vt:.1f}")
+        st.write(f"δcp (Vt - Dm) = {dcp:.1f}")
+
+        if abs(dcp) > 1.5:
+            st.warning("⚠️ ¡ATENCIÓN! El desvío del compás patrón excede el límite recomendado de ±1°,5")
+
+        # Generación de PDF
+        def generar_pdf():
+            buffer = BytesIO()
+            c = canvas.Canvas(buffer, pagesize=letter)
+            c.setFont("Helvetica", 12)
+            c.drawString(100, 750, "📄 Resultados del Cálculo de Desvíos Náuticos")
+            c.drawString(100, 720, f"εgc (Azv - Azgc) = {egc:.1f}")
+            c.drawString(100, 700, f"Rv (Rgc + εgc) = {rv:.1f}")
+            c.drawString(100, 680, f"Vt (Rv - Rcp) = {vt:.1f}")
+            c.drawString(100, 660, f"δcp (Vt - Dm) = {dcp:.1f}")
+            if abs(dcp) > 1.5:
+                c.setFillColorRGB(1, 0, 0)
+                c.drawString(100, 630, "⚠️ ¡El desvío del compás patrón excede el límite recomendado!")
+            c.save()
+            buffer.seek(0)
+            return buffer
+
+        pdf = generar_pdf()
+        st.download_button("📥 Descargar PDF", data=pdf, file_name="resultados_navegacion.pdf", mime="application/pdf")
 
 # 🖋️ Firma
 st.markdown("""
