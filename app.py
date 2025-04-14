@@ -1,7 +1,7 @@
 import streamlit as st
 import base64
-from fpdf import FPDF
 from datetime import datetime
+from fpdf import FPDF
 
 # ✅ Configuración de la página (¡esto va primero!)
 st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
@@ -58,16 +58,24 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     delta_cp = Vt - Dm         # Desvío del compás patrón (δcp)
     return egc, Rv, Vt, delta_cp
 
-# Función para crear PDF
+# Función para crear PDF (modificada para manejar caracteres Unicode)
 def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp):
     pdf = FPDF()
     pdf.add_page()
     
-    # Configuración de fuente
-    pdf.set_font("Arial", "B", 16)
+    # Configurar para soportar caracteres Unicode
+    pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
+    pdf.set_font('DejaVu', '', 14)
     
-    # Título
-    pdf.cell(190, 10, "Calculadora de Desvíos Náuticos", 0, 1, "C")
+    # Alternativa si la fuente DejaVu no está disponible
+    try:
+        # Título
+        pdf.cell(190, 10, "Calculadora de Desvios Nauticos", 0, 1, "C")
+    except Exception:
+        # Si falla, intentar con Arial
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(190, 10, "Calculadora de Desvios Nauticos", 0, 1, "C")
+    
     pdf.ln(10)
     
     # Fecha y hora
@@ -80,33 +88,34 @@ def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp):
     pdf.set_font("Arial", "B", 12)
     pdf.cell(190, 10, "Datos Ingresados:", 0, 1, "L")
     pdf.set_font("Arial", "", 12)
-    pdf.cell(190, 8, f"Azv (Azimut Verdadero): {Azv:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"Azgc (Azimut del Girocompás): {Azgc:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"Rgc (Rumbo del Girocompás): {Rgc:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"Rcp (Rumbo del Compás Patrón): {Rcp:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"Dm (Declinación Magnética): {Dm:.2f}°", 0, 1, "L")
+    pdf.cell(190, 8, f"Azv (Azimut Verdadero): {Azv:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"Azgc (Azimut del Giroscopio): {Azgc:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"Rgc (Rumbo del Giroscopio): {Rgc:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"Rcp (Rumbo del Compas Patron): {Rcp:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"Dm (Declinacion Magnetica): {Dm:.2f} grados", 0, 1, "L")
     pdf.ln(10)
     
     # Resultados
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(190, 10, "Resultados del Cálculo:", 0, 1, "L")
+    pdf.cell(190, 10, "Resultados del Calculo:", 0, 1, "L")
     pdf.set_font("Arial", "", 12)
-    pdf.cell(190, 8, f"εgc (Azv - Azgc) = {egc:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"Rv (Rgc + εgc) = {Rv:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"Vt (Rv - Rcp) = {Vt:.2f}°", 0, 1, "L")
-    pdf.cell(190, 8, f"δcp (Vt - Dm) = {delta_cp:.2f}°", 0, 1, "L")
+    pdf.cell(190, 8, f"egc (Azv - Azgc) = {egc:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"Rv (Rgc + egc) = {Rv:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"Vt (Rv - Rcp) = {Vt:.2f} grados", 0, 1, "L")
+    pdf.cell(190, 8, f"dcp (Vt - Dm) = {delta_cp:.2f} grados", 0, 1, "L")
     
     # Pie de página
     pdf.ln(20)
     pdf.set_font("Arial", "I", 10)
     pdf.cell(190, 10, "Desarrollado por QUIROGA MATIAS © 2025", 0, 1, "C")
     
-    return pdf.output(dest="S").encode("latin1")
+    return pdf.output(dest="S").encode("latin1", errors="replace")
 
 # Función para crear enlace de descarga
-def get_download_link(pdf_bytes, filename):
-    b64 = base64.b64encode(pdf_bytes).decode()
-    return f'<a href="data:application/pdf;base64,{b64}" download="{filename}">Descargar Resultados como PDF</a>'
+def get_binary_file_downloader_html(bin_data, file_label='File', filename='file.pdf'):
+    bin_str = base64.b64encode(bin_data).decode()
+    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{filename}">{file_label}</a>'
+    return href
 
 # 🔘 Botón de cálculo
 if st.button("⚓ Calcular"):
@@ -119,14 +128,19 @@ if st.button("⚓ Calcular"):
     st.success(f"δcp (Vt - Dm) = **{delta_cp:.2f}°**")
     st.markdown("---")
     
-    # Generar PDF y crear enlace de descarga
-    pdf_bytes = crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp)
-    fecha_archivo = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"Resultados_Desvios_Nauticos_{fecha_archivo}.pdf"
-    
-    st.markdown("<div class='download-button'>", unsafe_allow_html=True)
-    st.markdown(get_download_link(pdf_bytes, filename), unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    try:
+        # Generar PDF y crear enlace de descarga
+        pdf_bytes = crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp)
+        fecha_archivo = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"Resultados_Desvios_Nauticos_{fecha_archivo}.pdf"
+        
+        st.markdown("<div class='download-button'>", unsafe_allow_html=True)
+        download_link = get_binary_file_downloader_html(pdf_bytes, 'Descargar Resultados como PDF', filename)
+        st.markdown(download_link, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Hubo un problema al generar el PDF. Por favor intente nuevamente.")
+        st.error("Error: Problema con la codificación de caracteres especiales.")
 
 # 🖋️ Firma
 st.markdown("""
