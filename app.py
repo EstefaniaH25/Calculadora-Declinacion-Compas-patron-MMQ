@@ -104,7 +104,7 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
 # Función para formatear número a grados°,décimas
 def decimal_to_format(valor):
     grados = int(valor)
-    decimas = round((valor - grados) * 10)
+    decimas = round(abs(valor - grados) * 10)
     return f"{grados}°,{decimas}"
 
 # Función para crear PDF con ReportLab
