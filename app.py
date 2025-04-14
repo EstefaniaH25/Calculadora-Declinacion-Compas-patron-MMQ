@@ -104,9 +104,17 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
 
 # Función para formatear número a grados°,décimas
 def decimal_to_format(valor):
-    grados = math.floor(valor)  # para mantener el signo correctamente
-    decimas = round(abs(valor - grados) * 10)
-    return f"{grados}°,{decimas}"
+    signo = '-' if valor < 0 else ''
+    valor_abs = abs(valor)
+    grados = int(valor_abs)
+    decimas = round((valor_abs - grados) * 10)
+
+    # Ajuste por redondeo de décimas > 9 (ej: 12.96 redondea a 13,0)
+    if decimas == 10:
+        grados += 1
+        decimas = 0
+
+    return f"{signo}{grados}°,{decimas}"
 
 # Inicializar las variables con un valor por defecto
 egc, Rv, Vt, delta_cp = 0.0, 0.0, 0.0, 0.0
