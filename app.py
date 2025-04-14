@@ -1,7 +1,15 @@
 import streamlit as st
 import base64
 from datetime import datetime
-from fpdf import FPDF
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # ✅ Configuración de la página (¡esto va primero!)
 st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
@@ -58,63 +66,91 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     delta_cp = Vt - Dm         # Desvío del compás patrón (δcp)
     return egc, Rv, Vt, delta_cp
 
-# Función para crear PDF (modificada para manejar caracteres Unicode)
+# Función para crear PDF con ReportLab
 def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp):
-    pdf = FPDF()
-    pdf.add_page()
+    buffer = io.BytesIO()
     
-    # Configurar para soportar caracteres Unicode
-    pdf.add_font('DejaVu', '', 'DejaVuSansCondensed.ttf', uni=True)
-    pdf.set_font('DejaVu', '', 14)
+    # Configurar el documento
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    story = []
     
-    # Alternativa si la fuente DejaVu no está disponible
-    try:
-        # Título
-        pdf.cell(190, 10, "Calculadora de Desvios Nauticos", 0, 1, "C")
-    except Exception:
-        # Si falla, intentar con Arial
-        pdf.set_font("Arial", "B", 16)
-        pdf.cell(190, 10, "Calculadora de Desvios Nauticos", 0, 1, "C")
+    # Estilos
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle(
+        'TituloStyle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=16,
+        alignment=1,  # Centrado
+        spaceAfter=20
+    )
     
-    pdf.ln(10)
+    subtitulo_style = ParagraphStyle(
+        'SubtituloStyle', 
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        spaceAfter=10
+    )
+    
+    normal_style = ParagraphStyle(
+        'NormalStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=12,
+        spaceAfter=5
+    )
+    
+    # Título
+    titulo = Paragraph("Calculadora de Desvíos Náuticos", titulo_style)
+    story.append(titulo)
     
     # Fecha y hora
-    pdf.set_font("Arial", "I", 10)
     fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    pdf.cell(190, 10, f"Generado el: {fecha_actual}", 0, 1, "R")
-    pdf.ln(5)
+    fecha = Paragraph(f"Generado el: {fecha_actual}", styles['Italic'])
+    story.append(fecha)
+    story.append(Spacer(1, 0.5*inch))
     
     # Datos ingresados
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(190, 10, "Datos Ingresados:", 0, 1, "L")
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(190, 8, f"Azv (Azimut Verdadero): {Azv:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"Azgc (Azimut del Giroscopio): {Azgc:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"Rgc (Rumbo del Giroscopio): {Rgc:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"Rcp (Rumbo del Compas Patron): {Rcp:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"Dm (Declinacion Magnetica): {Dm:.2f} grados", 0, 1, "L")
-    pdf.ln(10)
+    datos_titulo = Paragraph("Datos Ingresados:", subtitulo_style)
+    story.append(datos_titulo)
+    
+    story.append(Paragraph(f"Azv (Azimut Verdadero): {Azv:.2f}°", normal_style))
+    story.append(Paragraph(f"Azgc (Azimut del Girocompás): {Azgc:.2f}°", normal_style))
+    story.append(Paragraph(f"Rgc (Rumbo del Girocompás): {Rgc:.2f}°", normal_style))
+    story.append(Paragraph(f"Rcp (Rumbo del Compás Patrón): {Rcp:.2f}°", normal_style))
+    story.append(Paragraph(f"Dm (Declinación Magnética): {Dm:.2f}°", normal_style))
+    
+    story.append(Spacer(1, 0.5*inch))
     
     # Resultados
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(190, 10, "Resultados del Calculo:", 0, 1, "L")
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(190, 8, f"egc (Azv - Azgc) = {egc:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"Rv (Rgc + egc) = {Rv:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"Vt (Rv - Rcp) = {Vt:.2f} grados", 0, 1, "L")
-    pdf.cell(190, 8, f"dcp (Vt - Dm) = {delta_cp:.2f} grados", 0, 1, "L")
+    resultados_titulo = Paragraph("Resultados del Cálculo:", subtitulo_style)
+    story.append(resultados_titulo)
+    
+    story.append(Paragraph(f"εgc (Azv - Azgc) = {egc:.2f}°", normal_style))
+    story.append(Paragraph(f"Rv (Rgc + εgc) = {Rv:.2f}°", normal_style))
+    story.append(Paragraph(f"Vt (Rv - Rcp) = {Vt:.2f}°", normal_style))
+    story.append(Paragraph(f"δcp (Vt - Dm) = {delta_cp:.2f}°", normal_style))
+    
+    story.append(Spacer(1, inch))
     
     # Pie de página
-    pdf.ln(20)
-    pdf.set_font("Arial", "I", 10)
-    pdf.cell(190, 10, "Desarrollado por QUIROGA MATIAS © 2025", 0, 1, "C")
+    footer = Paragraph("Desarrollado por QUIROGA MATIAS © 2025", styles['Italic'])
+    story.append(footer)
     
-    return pdf.output(dest="S").encode("latin1", errors="replace")
+    # Construir el documento
+    doc.build(story)
+    
+    # Obtener el valor del buffer y devolverlo
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_data
 
 # Función para crear enlace de descarga
 def get_binary_file_downloader_html(bin_data, file_label='File', filename='file.pdf'):
     bin_str = base64.b64encode(bin_data).decode()
-    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{filename}">{file_label}</a>'
+    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{filename}" class="download-button-link" style="background-color: #004080; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold;">{file_label}</a>'
     return href
 
 # 🔘 Botón de cálculo
@@ -135,12 +171,12 @@ if st.button("⚓ Calcular"):
         filename = f"Resultados_Desvios_Nauticos_{fecha_archivo}.pdf"
         
         st.markdown("<div class='download-button'>", unsafe_allow_html=True)
-        download_link = get_binary_file_downloader_html(pdf_bytes, 'Descargar Resultados como PDF', filename)
+        download_link = get_binary_file_downloader_html(pdf_bytes, '📥 Descargar Resultados como PDF', filename)
         st.markdown(download_link, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Hubo un problema al generar el PDF. Por favor intente nuevamente.")
-        st.error("Error: Problema con la codificación de caracteres especiales.")
+        st.error(f"Error: {str(e)}")
 
 # 🖋️ Firma
 st.markdown("""
