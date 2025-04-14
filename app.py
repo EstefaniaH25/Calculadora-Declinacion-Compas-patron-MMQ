@@ -79,11 +79,11 @@ def format_to_decimal(input_str):
         return None, None
 
 # 📥 Entradas del usuario en un solo campo de texto
-Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "0,0")
-Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "0,0")
-Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "0,0")
-Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "0,0")
-Dm_str = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "0,0")
+Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "70,5")
+Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "70,8")
+Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "132,5")
+Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "144,6")
+Dm_str = st.text_input("🔹 Dm (Declinación Magnética) - Grados,décimas", "-10,5")
 
 # Convertir las entradas a formato decimal y formatearlas
 Azv, Azv_formatted = format_to_decimal(Azv_str)
@@ -106,7 +106,6 @@ def decimal_to_format(valor):
     grados = int(valor)
     decimas = int(round(abs((valor - grados) * 10)))
     return f"{grados}°,{decimas}"
-
 
 # Función para crear PDF con ReportLab
 def crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_formatted, egc, Rv, Vt, delta_cp, alerta_delta_cp):
