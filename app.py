@@ -1,16 +1,16 @@
 import streamlit as st
- import base64
- import math
- from datetime import datetime
- import io
- from reportlab.pdfgen import canvas
- from reportlab.lib.pagesizes import letter
- from reportlab.lib import colors
- from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
- from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
- from reportlab.lib.units import inch
- from reportlab.pdfbase import pdfmetrics
- from reportlab.pdfbase.ttfonts import TTFont
+import base64
+import math
+from datetime import datetime
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
  
  # ✅ Configuración de la página (¡esto va primero!)
  st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
