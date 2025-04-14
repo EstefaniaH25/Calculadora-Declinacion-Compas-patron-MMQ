@@ -11,64 +11,64 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
- 
- # ✅ Configuración de la página (¡esto va primero!)
- st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
- 
- # 🎨 Estilos personalizados y firma flotante
- st.markdown("""
-     <style>
-         html, body, [class*="css"] {
-             font-family: 'Segoe UI', sans-serif;
-         }
-         h1 {
-             color: navy;
-         }
-         .custom-footer {
-             text-align: center;
-             color: gray;
-             font-size: 14px;
-             margin-top: 50px;
-         }
-         .stButton>button {
-             background-color: #004080;
-             color: white;
-             border-radius: 8px;
-             padding: 0.5em 1.5em;
-             font-weight: bold;
-         }
-         .stButton>button:hover {
-             background-color: #0066cc;
-         }
-         .download-button {
-             text-align: center;
-             margin-top: 20px;
-         }
-         .warning {
-             background-color: #ffffcc;
-             padding: 10px;
-             border-left: 5px solid #ffcc00;
-             color: #333;
-             font-weight: bold;
-         }
-         .input-container {
-             display: flex;
-             align-items: center;
-         }
-         .input-degree {
-             margin-right: 5px;
-         }
-         .input-decimal {
-             margin-left: 5px;
-             width: 70px;
-         }
-     </style>
- """, unsafe_allow_html=True)
- 
- # 🧭 Título principal con símbolo sigma (σ)
- st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos (σ)</h1>", unsafe_allow_html=True)
- st.markdown("---")
- st.markdown("### Ingrese los datos en formato grados°,décimas:")
+
+# ✅ Configuración de la página (¡esto va primero!)
+st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
+
+# 🎨 Estilos personalizados y firma flotante
+st.markdown("""
+    <style>
+        html, body, [class*="css"] {
+            font-family: 'Segoe UI', sans-serif;
+        }
+        h1 {
+            color: navy;
+        }
+        .custom-footer {
+            text-align: center;
+            color: gray;
+            font-size: 14px;
+            margin-top: 50px;
+        }
+        .stButton>button {
+            background-color: #004080;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5em 1.5em;
+            font-weight: bold;
+        }
+        .stButton>button:hover {
+            background-color: #0066cc;
+        }
+        .download-button {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .warning {
+            background-color: #ffffcc;
+            padding: 10px;
+            border-left: 5px solid #ffcc00;
+            color: #333;
+            font-weight: bold;
+        }
+        .input-container {
+            display: flex;
+            align-items: center;
+        }
+        .input-degree {
+            margin-right: 5px;
+        }
+        .input-decimal {
+            margin-left: 5px;
+            width: 70px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# 🧭 Título principal con símbolo sigma (σ)
+st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos (σ)</h1>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("### Ingrese los datos en formato grados°,décimas:")
  
  # Función para convertir el formato xxx,x a xxx°,x y a valor decimal
  def format_to_decimal(input_str):
