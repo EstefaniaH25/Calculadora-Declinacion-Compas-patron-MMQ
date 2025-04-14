@@ -95,11 +95,10 @@ Dm, Dm_formatted = format_to_decimal(Dm_str)
 
 # 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
-    egc = Azv - Azgc           # Desvío del girocompás (εgc)
-    Rv = Rgc + egc             # Rumbo verdadero estimado
-    Vt = Rv - Rcp              # Variación total
-    delta_cp = Vt - Dm         # Desvío del compás patrón (δcp)
-    
+    egc = diferencia_angular(Azv, Azgc)   # εgc = Azv - Azgc
+    Rv = (Rgc + egc) % 360               # Rv = Rgc + εgc, normalizado
+    Vt = diferencia_angular(Rv, Rcp)     # Vt = Rv - Rcp
+    delta_cp = diferencia_angular(Vt, Dm)  # δcp = Vt - Dm
     return egc, Rv, Vt, delta_cp
 
 # Función para formatear número a grados°,décimas
