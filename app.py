@@ -195,7 +195,7 @@ def crear_pdf(Azv_formatted, Azgc_formatted, Rgc_formatted, Rcp_formatted, Dm_fo
     resultados_titulo = Paragraph("Resultados del Cálculo:", subtitulo_style)
     story.append(resultados_titulo)
     
-    story.append(Paragraph(f"εgc (Azv - Azgc) = {decimal_to_format(egc)}", normal_style))
+    story.append(Paragraph(f"εgc (Azv - Azgc) = {format_decimal(egc)}", normal_style))
     story.append(Paragraph(f"Rv (Rgc + εgc) = {decimal_to_format(Rv)}", normal_style))
     story.append(Paragraph(f"Vt (Rv - Rcp) = {decimal_to_format(Vt)}", normal_style))
     
@@ -250,7 +250,7 @@ if st.button("⚓ Calcular"):
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.success(f"δcp (Vt - Dm) = **{decimal_to_format(delta_cp)}**")
+            st.success(f"δcp (Vt - Dm) = **{format_decimal(delta_cp)}**")
         
         st.markdown("---")
         
