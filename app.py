@@ -11,7 +11,7 @@ from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# ✅ Configuración de la página (¡esto va primero!)
+# ✅ Configuración de la página
 st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
 
 # 🎨 Estilos personalizados y firma flotante
@@ -47,7 +47,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 🧭 Título principal
-st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvio Compas Patron (σcp)</h1>", unsafe_allow_html=True)
 st.markdown("---")
 st.markdown("### Ingrese los datos en grados decimales:")
 
@@ -102,7 +102,7 @@ def crear_pdf(Azv, Azgc, Rgc, Rcp, Dm, egc, Rv, Vt, delta_cp):
     )
     
     # Título
-    titulo = Paragraph("Calculadora de Desvíos Náuticos", titulo_style)
+    titulo = Paragraph("Calculadora de Desvio Compas Patron (σcp)", titulo_style)
     story.append(titulo)
     
     # Fecha y hora
