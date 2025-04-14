@@ -1,65 +1,49 @@
 import streamlit as st
 
+# ✅ Configuración de la página (¡esto va primero!)
+st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
+
 # 🎨 Estilos personalizados y firma flotante
 st.markdown("""
     <style>
-        /* Fondo principal */
-        .main {
-            background-color: #1e1e1e;
-            color: white;
+        html, body, [class*="css"] {
+            font-family: 'Segoe UI', sans-serif;
         }
-
-        /* Inputs */
-        input {
-            background-color: #222 !important;
-            color: white !important;
+        h1 {
+            color: navy;
         }
-
-        /* Botón personalizado */
-        .stButton > button {
-            background-color: #00ccff;
+        .custom-footer {
+            text-align: center;
+            color: gray;
+            font-size: 14px;
+            margin-top: 50px;
+        }
+        .stButton>button {
+            background-color: #004080;
             color: white;
-            border-radius: 10px;
-            padding: 8px 20px;
+            border-radius: 8px;
+            padding: 0.5em 1.5em;
             font-weight: bold;
         }
-
-        /* Ocultar footer de Streamlit */
-        footer {
-            visibility: hidden;
-        }
-
-        /* Tu firma flotante */
-        .custom-footer {
-            position: fixed;
-            bottom: 10px;
-            right: 20px;
-            color: #888;
-            font-size: 13px;
+        .stButton>button:hover {
+            background-color: #0066cc;
         }
     </style>
-
-    <div class="custom-footer">
-        Desarrollado con 💙 por Matías Quiroga
-    </div>
 """, unsafe_allow_html=True)
 
-# Configuración general de la página
-st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
-
-# Título con estilo
-st.markdown("<h1 style='text-align: center; color: navy;'>🧭 Calculadora de Desvíos Náuticos</h1>", unsafe_allow_html=True)
+# 🧭 Título principal
+st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos</h1>", unsafe_allow_html=True)
 st.markdown("---")
 st.markdown("### Ingrese los datos en grados decimales:")
 
-# Entradas
+# 📥 Entradas del usuario
 Azv = st.number_input("🔹 Azv (Azimut Verdadero)", value=0.0)
 Azgc = st.number_input("🔹 Azgc (Azimut del Girocompás)", value=0.0)
 Rgc = st.number_input("🔹 Rgc (Rumbo del Girocompás)", value=0.0)
 Rcp = st.number_input("🔹 Rcp (Rumbo del Compás Patrón)", value=0.0)
 Dm = st.number_input("🔹 Dm (Declinación Magnética)", value=0.0)
 
-# Cálculos
+# 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     egc = Azv - Azgc           # Desvío del girocompás (εgc)
     Rv = Rgc + egc             # Rumbo verdadero estimado
@@ -67,6 +51,7 @@ def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
     delta_cp = Vt - Dm         # Desvío del compás patrón (δcp)
     return egc, Rv, Vt, delta_cp
 
+# 🔘 Botón de cálculo
 if st.button("⚓ Calcular"):
     egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
     
@@ -75,13 +60,13 @@ if st.button("⚓ Calcular"):
     st.success(f"Rv (Rgc + εgc) = **{Rv:.2f}°**")
     st.success(f"Vt (Rv - Rcp) = **{Vt:.2f}°**")
     st.success(f"δcp (Vt - Dm) = **{delta_cp:.2f}°**")
-
     st.markdown("---")
 
-# Firma estática al final (opcional si ya usás la flotante)
+# 🖋️ Firma
 st.markdown("""
-<div style='text-align: center; color: gray; font-size: 14px; margin-top: 40px;'>
-    Desarrollado por <strong>QUIROGA MATIAS</strong> 🌊<br>
-    © 2025 - Todos los derechos reservados.
-</div>
+    <div class="custom-footer">
+        Desarrollado por <strong>QUIROGA MATIAS</strong> 🌊<br>
+        © 2025 - Todos los derechos reservados.
+    </div>
 """, unsafe_allow_html=True)
+
