@@ -68,19 +68,30 @@ st.markdown("""
 # 🧭 Título principal con símbolo sigma (σ)
 st.markdown("<h1 style='text-align: center;'>🧭 Calculadora de Desvíos Náuticos (σ)</h1>", unsafe_allow_html=True)
 st.markdown("---")
-st.markdown("### Ingrese los datos en formato grados°,décimas:")
+st.markdown("### Ingrese los datos en formato grados°,décimas o grados°.décimas:")
 
-# Función para convertir el formato xxx,x a xxx°,x y a valor decimal
+# Función para convertir el formato xxx,x o xxx.x a xxx°,x y a valor decimal
 def format_to_decimal(input_str):
     try:
-        grados, decimas = map(float, input_str.split(","))
+        # Reemplazar punto por coma si es necesario para unificar el formato
+        input_str = input_str.replace(".", ",")
+        
+        # Dividir por la coma
+        if "," in input_str:
+            grados, decimas = map(float, input_str.split(","))
+        else:
+            # Si no hay coma, asumir que es un número entero
+            grados = float(input_str)
+            decimas = 0
+            
+        # Convertir a valor decimal y formato de presentación
         return grados + (decimas / 10), f"{int(grados)}°,{int(decimas)}"
     except ValueError:
-        st.error("Formato incorrecto. Use grados,décimas (ej: 123,4)")
+        st.error("Formato incorrecto. Use grados,décimas (ej: 123,4) o grados.décimas (ej: 123.4)")
         return None, None
 
 # 📥 Entradas del usuario en un solo campo de texto
-Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4)", "0,0")
+Azv_str = st.text_input("🔹 Azv (Azimut Verdadero) - Grados,décimas (ej: 123,4 o 123.4)", "0,0")
 Azgc_str = st.text_input("🔹 Azgc (Azimut del Girocompás) - Grados,décimas", "0,0")
 Rgc_str = st.text_input("🔹 Rgc (Rumbo del Girocompás) - Grados,décimas", "0,0")
 Rcp_str = st.text_input("🔹 Rcp (Rumbo del Compás Patrón) - Grados,décimas", "0,0")
@@ -101,10 +112,12 @@ def diferencia_angular(a, b):
     
 # 🧮 Cálculos
 def calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm):
-    egc = diferencia_angular(Azv, Azgc)       # εgc = Azv - Azgc
-    Rv = (Rgc + egc) % 360                     # Rv = Rgc + εgc
-    Vt = diferencia_angular(Rv, Rcp)           # Vt = Rv - Rcp
-    delta_cp = Vt - Dm                         # 🔧 corregido: δcp = Vt - Dm (sin normalizar)
+    # Asegurar precisión de cálculos intermedios con redondeo adecuado
+    egc = round(diferencia_angular(Azv, Azgc), 1)       # εgc = Azv - Azgc
+    Rv = round((Rgc + egc) % 360, 1)                    # Rv = Rgc + εgc
+    Vt = round(diferencia_angular(Rv, Rcp), 1)          # Vt = Rv - Rcp
+    delta_cp = round(Vt - Dm, 1)                        # δcp = Vt - Dm
+    
     return egc, Rv, Vt, delta_cp
 
 # Función para formatear número a grados°,décimas
@@ -232,6 +245,9 @@ if st.button("⚓ Calcular"):
     # Verificar que todos los valores han sido ingresados correctamente
     if Azv is not None and Azgc is not None and Rgc is not None and Rcp is not None and Dm is not None:
         egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
+        
+        # Línea de depuración opcional (comentada)
+        # st.write(f"Debug: Vt={Vt}, Dm={Dm}, delta_cp={delta_cp}")
         
         # Verificar si el desvío del compás patrón está fuera de rango
         alerta_delta_cp = abs(delta_cp) > 1.5
