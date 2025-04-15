@@ -11,6 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+import plotly.graph_objects as go
 
 # ✅ Configuración de la página
 st.set_page_config(page_title="Calculadora Náutica", page_icon="🧭", layout="centered")
@@ -192,6 +193,36 @@ def get_binary_file_downloader_html(bin_data, file_label='File', filename='file.
     href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{filename}" class="download-button-link" style="background-color: #004080; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold;">{file_label}</a>'
     return href
 
+# Función para graficar los ángulos con Plotly
+def graficar_angulos_plotly(Azv, Azgc, Rgc, Rcp, Rv):
+    # Lista de ángulos y etiquetas
+    angulos = [Azv, Azgc, Rgc, Rcp, Rv]
+    etiquetas = ['Azv', 'Azgc', 'Rgc', 'Rcp', 'Rv']
+    colores = ['royalblue', 'seagreen', 'firebrick', 'orange', 'purple']
+
+    fig = go.Figure()
+
+    for ang, label, color in zip(angulos, etiquetas, colores):
+        fig.add_trace(go.Scatterpolar(
+            r=[0, 1],
+            theta=[ang, ang],
+            mode='lines+text',
+            line=dict(color=color, width=4),
+            text=[None, label],
+            textposition='top center',
+            name=label
+        ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=False, range=[0, 1.1]),
+            angularaxis=dict(direction="clockwise", rotation=90)
+        ),
+        showlegend=True,
+        title="Visualización Interactiva de Ángulos Náuticos"
+    )
+    return fig
+
 # 🔘 Botón de cálculo
 if st.button("⚓ Calcular"):
     egc, Rv, Vt, delta_cp = calcular_desvios(Azv, Azgc, Rgc, Rcp, Dm)
@@ -220,6 +251,11 @@ if st.button("⚓ Calcular"):
         st.write(f"Vt = {Vt}")
         st.write(f"Dm = {Dm}")
         st.write(f"δcp = Vt - Dm = {Vt} - ({Dm}) = {delta_cp}")
+    
+    # Gráfico de ángulos con Plotly
+    st.markdown("### 📈 Visualización Interactiva de Ángulos")
+    fig = graficar_angulos_plotly(Azv, Azgc, Rgc, Rcp, Rv)
+    st.plotly_chart(fig, use_container_width=True)
     
     st.markdown("---")
     
