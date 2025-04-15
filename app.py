@@ -250,8 +250,8 @@ if st.button("⚓ Calcular"):
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.success(f"δcp (Vt - Dm) = **{format_decimal(delta_cp)}**")
-        
+            st.success(f"δcp (Vt - Dm) = **{decimal_to_format(delta_cp)}**") 
+            
         st.markdown("---")
         
         try:
